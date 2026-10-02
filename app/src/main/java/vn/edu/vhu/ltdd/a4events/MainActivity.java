@@ -15,7 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.util.Locale;
-
+import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     // TODO: thay 2201234567 bằng MSSV của bạn
@@ -23,6 +23,29 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText edtSoA, edtSoB, edtCanNang, edtChieuCao;
     private TextView tvKetQua, tvBmi, tvPhanLoai;
+
+    //Lưu lịch sử
+    private TextView tvLichSu;
+    private ArrayList<String> danhSachLichSu = new ArrayList<>();
+    private static final String KEY_HISTORY = "lich_su_tinh_toan";
+
+
+    //  Lưu dữ liệu trước khi Activity bị hủy (ví dụ: khi xoay màn hình)
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putStringArrayList(KEY_HISTORY, danhSachLichSu);
+    }
+
+
+    //  Viết hàm hiển thị lịch sử lên TextView
+    private void capNhatGiaoDienLichSu() {
+        StringBuilder sb = new StringBuilder();
+        for (String item : danhSachLichSu) {
+            sb.append(item).append("\n");
+        }
+        tvLichSu.setText(sb.toString());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         edtChieuCao = findViewById(R.id.edtChieuCao);
         tvBmi = findViewById(R.id.tvBmi);
         tvPhanLoai = findViewById(R.id.tvPhanLoai);
+        tvLichSu = findViewById(R.id.tvLichSu);
 
         Button btnCong = findViewById(R.id.btnCong);
         Button btnTru = findViewById(R.id.btnTru);
@@ -70,6 +94,14 @@ public class MainActivity extends AppCompatActivity {
                 tinhToan('/');
             }
         };
+        //Khôi phục dữ liệu khi xoay màn hình
+        if (savedInstanceState != null) {
+            danhSachLichSu = savedInstanceState.getStringArrayList(KEY_HISTORY);
+            if (danhSachLichSu == null) {
+                danhSachLichSu = new ArrayList<>();
+            }
+            capNhatGiaoDienLichSu();
+        }
         btnNhan.setOnClickListener(chung);
         btnChia.setOnClickListener(chung);
 
@@ -125,6 +157,18 @@ public class MainActivity extends AppCompatActivity {
         tvKetQua.setText(String.format(Locale.getDefault(), "%.2f %c %.2f = %.2f",
                 a, phepToan, b, ketQua));
         Log.d(TAG, "Phép tính: " + a + " " + phepToan + " " + b + " = " + ketQua);
+        String chuoiKetQua = String.format(Locale.getDefault(), "%.2f %c %.2f = %.2f", a, phepToan, b, ketQua);
+        tvKetQua.setText(chuoiKetQua);
+        //Lưu lại lịch sử sau khi tính thành công
+        // Thêm vào đầu danh sách lịch sử
+        danhSachLichSu.add(0, chuoiKetQua);
+
+        // Giữ tối đa 5 phần tử
+        if (danhSachLichSu.size() > 5) {
+            danhSachLichSu.remove(5);
+        }
+
+        capNhatGiaoDienLichSu();
     }
 
     private void xoaTrang() {
@@ -134,6 +178,8 @@ public class MainActivity extends AppCompatActivity {
         edtSoB.setError(null);
         tvKetQua.setText(R.string.result_placeholder);
         edtSoA.requestFocus();
+        danhSachLichSu.clear();
+        capNhatGiaoDienLichSu();
     }
     //Tính phần trăm
     private void tinhPhanTramHienTai() {
